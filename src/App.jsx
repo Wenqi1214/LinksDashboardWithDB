@@ -8,6 +8,19 @@ export default function App() {
 
     const [newCat, setNewCat] = useState("");
     const [form, setForm] = useState({ id: null, name: "", url: "", category_id: "" });
+    const [themeMode, setThemeMode] = useState(
+        () => localStorage.getItem("theme-mode") || "system"
+    );
+
+    useEffect(() => {
+        localStorage.setItem("theme-mode", themeMode);
+
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const resolved = themeMode === "system" ? (prefersDark ? "dark" : "light") : themeMode;
+
+        document.documentElement.dataset.theme = resolved;
+        document.documentElement.dataset.themeMode = themeMode;
+    }, [themeMode]);
 
     async function load() {
         const [cRes, lRes] = await Promise.all([
@@ -78,7 +91,15 @@ export default function App() {
 
     return (
         <div className="page">
-            <h1 className="title">LinkDash</h1>
+            <div className="topbar">
+                <h1 className="title">LinkDash</h1>
+
+                <div className="row">
+                    <button onClick={() => setThemeMode("light")}>Light</button>
+                    <button onClick={() => setThemeMode("dark")}>Dark</button>
+                    <button onClick={() => setThemeMode("system")}>System</button>
+                </div>
+            </div>
 
             {/* Add/Delete Categories */}
             <section className="card">

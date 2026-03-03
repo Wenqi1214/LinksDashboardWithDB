@@ -9,5 +9,14 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      (function () {
+        const saved = localStorage.getItem("theme-mode") || "system";
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const resolved = saved === "system" ? (prefersDark ? "dark" : "light") : saved;
+        document.documentElement.dataset.theme = resolved;   // "light" | "dark"
+        document.documentElement.dataset.themeMode = saved;  // "light" | "dark" | "system"
+      })();
+    </script>
   </body>
 </html>
