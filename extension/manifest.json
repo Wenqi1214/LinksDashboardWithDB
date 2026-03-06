@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "LinkDash New Tab",
+  "version": "1.0.0",
+  "description": "Personal links, focus, and todo dashboard.",
+  "action": {
+    "default_title": "Open LinkDash"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "storage",
+    "tabs"
+  ]
+}

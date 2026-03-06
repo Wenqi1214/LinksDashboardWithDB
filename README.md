@@ -1,3 +1,22 @@
+# LinkDash
+
+## Build As Chrome Extension (New Tab)
+
+1. Build extension package:
+
+```bash
+npm run build:ext
+```
+
+2. Open `chrome://extensions`.
+3. Enable `Developer mode`.
+4. Click `Load unpacked`.
+5. Select folder: `extension-dist`.
+6. Pin the extension and click its toolbar icon to open LinkDash in a tab.
+
+This extension no longer overrides your default new tab page.
+It runs with local browser storage in extension mode, so it does not require the Node/SQLite server.
+
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
