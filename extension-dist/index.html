@@ -8,7 +8,20 @@
     <script>
       (function () {
         const saved = localStorage.getItem("theme-mode") || "system";
-        const palette = localStorage.getItem("theme-palette") || "paper";
+        const allowed = new Set([
+          "blank",
+          "pastel-blue-special",
+          "girl-holding-rose",
+          "easter",
+          "pasteltones",
+          "thoughts",
+          "lonestar",
+          "pastelclass",
+          "walkalong",
+          "evensadness",
+        ]);
+        const rawPalette = localStorage.getItem("theme-palette");
+        const palette = rawPalette && allowed.has(rawPalette) ? rawPalette : "pastel-blue-special";
         const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
         const resolved = saved === "system" ? (prefersDark ? "dark" : "light") : saved;
         document.documentElement.dataset.theme = resolved;
@@ -16,8 +29,8 @@
         document.documentElement.dataset.palette = palette;
       })();
     </script>
-    <script type="module" crossorigin src="/assets/index-CZ5jW_w0.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-DrLd8MJk.css">
+    <script type="module" crossorigin src="/assets/index-DPdgs_4D.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-DvBVNM0L.css">
   </head>
   <body>
     <div id="root"></div>

@@ -47,6 +47,25 @@ export async function localDeletePanel(panelId) {
   return { ok: true };
 }
 
+export async function localReorderPanels(orderedIds) {
+  withState((state) => {
+    orderedIds.forEach((id, index) => {
+      const row = state.panels.find((p) => p.id === Number(id));
+      if (row) row.sort_order = index;
+    });
+  });
+  return { ok: true };
+}
+
+export async function localUpdatePanel(panelId, payload) {
+  withState((state) => {
+    const row = state.panels.find((p) => p.id === Number(panelId));
+    if (!row) throw new Error("Panel not found");
+    row.name = String(payload?.name || "").trim() || row.name;
+  });
+  return { ok: true };
+}
+
 export async function localGetCategories(panelId) {
   const state = loadState();
   return state.categories
@@ -71,6 +90,15 @@ export async function localDeleteCategory(categoryId) {
   withState((state) => {
     state.categories = state.categories.filter((c) => c.id !== Number(categoryId));
     state.links = state.links.filter((l) => l.category_id !== Number(categoryId));
+  });
+  return { ok: true };
+}
+
+export async function localUpdateCategory(categoryId, payload) {
+  withState((state) => {
+    const row = state.categories.find((c) => c.id === Number(categoryId));
+    if (!row) throw new Error("Category not found");
+    row.name = String(payload?.name || "").trim() || row.name;
   });
   return { ok: true };
 }

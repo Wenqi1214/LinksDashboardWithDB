@@ -1,7 +1,44 @@
 .page {
+  position: relative;
+  z-index: 0;
   max-width: 1260px;
   margin: 0 auto;
   padding: 26px 22px 56px;
+}
+
+.page > *:not(.photoBackdrop):not(.floatingThemeDock):not(.overlay):not(.undoToast) {
+  position: relative;
+  z-index: 2;
+}
+
+.photoBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.photoBackdrop.hasPhoto {
+  opacity: 1;
+}
+
+.photoBackdrop img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transform: scale(var(--photo-scale, 1.2));
+  transform-origin: center;
+}
+
+.photoDim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, var(--photo-dim, 0.24));
 }
 
 .topbar {
@@ -13,10 +50,13 @@
 }
 
 .title {
-  margin: 0 0 6px;
-  font-size: 14px;
-  letter-spacing: 0.14em;
+  margin: 0 0 4px;
+  font-family: "Bodoni 72", "Didot", "Times New Roman", serif;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
+  color: color-mix(in srgb, var(--text) 92%, var(--accent2));
 }
 
 .headerLeft {
@@ -42,14 +82,16 @@
 
 .tabSlider {
   position: absolute;
-  top: 4px;
-  left: 4px;
-  bottom: 4px;
+  top: 0;
+  left: 0;
+  height: 0;
   width: 0;
   border-radius: 8px;
-  background: color-mix(in srgb, var(--accent2) 22%, var(--panel2));
+  background: var(--tab-highlight, var(--accent));
+  border: 1px solid color-mix(in srgb, var(--tab-highlight, var(--accent)) 78%, var(--border));
   transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1), width 260ms cubic-bezier(0.22, 1, 0.36, 1);
   opacity: 0;
+  pointer-events: none;
 }
 
 .tabSlider.ready {
@@ -57,7 +99,7 @@
 }
 
 .card {
-  background: var(--panel);
+  background: color-mix(in srgb, var(--panel) var(--user-panel-opacity), transparent);
   border: 1px solid var(--border);
   border-radius: 12px;
   box-shadow: var(--shadow);
@@ -82,10 +124,242 @@ h3 {
 }
 
 .muted {
-  margin: 0;
+  margin: 0 0 2px;
   color: var(--muted);
   font-size: 12px;
   line-height: 1.45;
+}
+
+.tagline {
+  margin: 0;
+  font-family: "Avenir Next", "Helvetica Neue", "Segoe UI", sans-serif;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--text) 72%, var(--muted));
+  letter-spacing: 0.01em;
+}
+
+.headerMeta {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--accent2) 68%, var(--muted));
+}
+
+.worldClocks {
+  margin-top: 6px;
+  display: grid;
+  gap: 8px;
+}
+
+.worldClockSection {
+  position: relative;
+  z-index: 12;
+  margin-bottom: 12px;
+}
+
+.addCityBtn {
+  min-width: 42px;
+  width: 42px;
+  min-height: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 12px;
+  font-size: 24px;
+  line-height: 1;
+  border: 1px solid color-mix(in srgb, var(--accent2) 45%, var(--border));
+  background: color-mix(in srgb, var(--panel2) 76%, transparent);
+}
+
+.cityAddSlot {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  min-width: 42px;
+}
+
+.cityAddSlot.open {
+  min-width: min(340px, calc(100vw - 40px));
+}
+
+.worldClockPicker {
+  margin: 0;
+  width: min(340px, calc(100vw - 40px));
+  padding: 8px;
+  border-radius: 12px;
+  display: grid;
+  gap: 7px;
+}
+
+.worldClockPickerTop {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+  align-items: center;
+}
+
+.worldClockPickerTop input {
+  min-height: 32px;
+  border-radius: 0;
+  font-size: 12px;
+}
+
+.worldClockResultsList {
+  max-height: 186px;
+  overflow: auto;
+  display: grid;
+  gap: 6px;
+}
+
+.worldClockResultItem {
+  justify-content: flex-start;
+  text-align: left;
+  min-width: 0;
+  width: 100%;
+  border-radius: 8px;
+  font-size: 11px;
+  min-height: 30px;
+}
+
+.worldClockRow {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 2px 5px;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--accent2) 35%, transparent) transparent;
+}
+
+.worldClockRow::-webkit-scrollbar {
+  height: 8px;
+}
+
+.worldClockRow::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.worldClockRow::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent2) 35%, transparent);
+}
+
+.worldClockItem {
+  min-width: 220px;
+  max-width: 220px;
+  border: 1px solid color-mix(in srgb, var(--border) 90%, transparent);
+  border-radius: 12px;
+  padding: 8px 10px;
+  background: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--panel2) 78%, transparent),
+    color-mix(in srgb, var(--panel) 88%, transparent)
+  );
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--accent2) 8%, transparent);
+  color: var(--text);
+  font-weight: 400;
+  letter-spacing: normal;
+  cursor: grab;
+  position: relative;
+}
+
+.worldClockItem:hover {
+  box-shadow: 0 6px 12px color-mix(in srgb, var(--accent2) 10%, transparent);
+}
+
+.worldClockItem:active {
+  cursor: grabbing;
+}
+
+.worldClockItem.day {
+  background: linear-gradient(160deg, #8fd0ff 0%, #c9e8ff 56%, #f2f9ff 100%);
+  border-color: rgba(98, 158, 214, 0.45);
+  box-shadow: 0 6px 14px rgba(69, 137, 196, 0.15);
+  color: #203246;
+}
+
+.worldClockItem.night {
+  background: linear-gradient(165deg, #16253f 0%, #223862 55%, #2d4a7f 100%);
+  border-color: rgba(118, 152, 214, 0.4);
+  box-shadow: 0 6px 14px rgba(18, 33, 62, 0.38);
+  color: #e6eefb;
+}
+
+.worldClockItem p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.sunLine {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.sunLine span {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.worldClockItem p strong {
+  color: var(--text);
+}
+
+.worldClockItem.day p {
+  color: #27435a;
+}
+
+.worldClockItem.night p {
+  color: #c2d4f3;
+}
+
+.worldClockItem.day p strong {
+  color: #163247;
+}
+
+.worldClockItem.night p strong {
+  color: #f1f6ff;
+}
+
+.cityLink {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.cityLink:hover {
+  text-decoration: underline;
+}
+
+.worldClockItem .iconBtn {
+  float: right;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  border-radius: 6px;
+  font-size: 12px;
+  margin-left: 6px;
+}
+
+.cityResizeHandle {
+  position: absolute;
+  top: 8px;
+  right: -4px;
+  bottom: 8px;
+  width: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent2) 28%, transparent);
+  cursor: ew-resize;
+  opacity: 0.5;
+}
+
+.cityResizeHandle:hover {
+  opacity: 1;
 }
 
 .row {
@@ -106,7 +380,7 @@ input,
 select {
   min-height: 40px;
   padding: 9px 12px;
-  background: var(--panel2);
+  background: color-mix(in srgb, var(--panel2) calc(var(--user-panel-opacity) - 8%), transparent);
   color: var(--text);
   border: 1px solid var(--border);
   outline: none;
@@ -129,7 +403,7 @@ button {
   padding: 7px 12px;
   border: 1px solid transparent;
   color: var(--text);
-  background: color-mix(in srgb, var(--panel2) 86%, var(--panel));
+  background: color-mix(in srgb, var(--panel2) calc(var(--user-panel-opacity) - 10%), transparent);
   cursor: pointer;
   transition: transform 0.08s ease, border-color 0.15s ease, background-color 0.15s ease;
 }
@@ -158,7 +432,7 @@ button.danger {
 
 .themeDock {
   margin: 0;
-  min-width: 220px;
+  min-width: 260px;
   border-radius: 14px;
   padding: 12px;
   display: grid;
@@ -170,7 +444,29 @@ button.danger {
   right: 16px;
   bottom: 16px;
   z-index: 55;
-  width: 220px;
+  width: 260px;
+}
+
+.floatingThemeDock.closed {
+  width: auto;
+  min-width: 0;
+  padding: 8px;
+}
+
+.floatingThemeDock.open {
+  width: 260px;
+}
+
+.dockToggle {
+  width: 100%;
+  min-height: 34px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent2) 16%, var(--panel2));
+  border-color: color-mix(in srgb, var(--accent2) 44%, var(--border));
+}
+
+.hiddenFileInput {
+  display: none;
 }
 
 .themeField {
@@ -189,6 +485,17 @@ button.danger {
   width: 100%;
 }
 
+.themeField input[type="file"] {
+  width: 100%;
+  min-height: 30px;
+  padding: 4px;
+  font-size: 11px;
+}
+
+.themeField input[type="range"] {
+  width: 100%;
+}
+
 .tabBtn {
   min-width: auto;
   border: 1px solid var(--border);
@@ -202,9 +509,25 @@ button.danger {
   z-index: 2;
 }
 
+.tabAddBtn {
+  min-width: 30px;
+  width: 30px;
+  display: grid;
+  place-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 18px;
+  line-height: 1;
+  gap: 0;
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--accent2) 48%, var(--border));
+}
+
 .tabActive {
   border-color: transparent;
   background: transparent;
+  color: var(--tab-active-text, var(--text));
+  font-weight: 600;
 }
 
 .tabIndex {
@@ -219,7 +542,8 @@ button.danger {
 }
 
 .sliderActive .tabIndex {
-  border-color: color-mix(in srgb, var(--accent2) 35%, var(--border));
+  border-color: color-mix(in srgb, var(--tab-active-text, var(--text)) 42%, var(--border));
+  color: color-mix(in srgb, var(--tab-active-text, var(--text)) 88%, var(--text));
 }
 
 .quickActions {
@@ -296,6 +620,10 @@ button.danger {
 
 .column {
   min-height: 220px;
+  background: rgba(255, 255, 255, 0.93);
+  border-color: color-mix(in srgb, #ffffff 58%, var(--border));
+  backdrop-filter: none;
+  box-shadow: 0 10px 24px rgba(28, 28, 28, 0.08);
 }
 
 .columnHead {
@@ -364,7 +692,7 @@ button.danger {
 }
 
 a {
-  color: var(--accent2);
+  color: var(--link, var(--accent2));
   text-decoration: none;
   font-weight: 600;
   letter-spacing: 0.01em;
@@ -414,6 +742,33 @@ a:hover {
   border-style: dashed;
   display: grid;
   place-items: center;
+}
+
+.addCategoryTail {
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--tab-highlight, var(--accent)) 52%, var(--border));
+  background: color-mix(in srgb, var(--panel2) 75%, transparent);
+  cursor: pointer;
+}
+
+.addCategoryTail:hover {
+  border-color: color-mix(in srgb, var(--tab-highlight, var(--accent)) 80%, var(--border));
+}
+
+.addCategoryPlus {
+  display: inline-grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  font-size: 28px;
+  line-height: 1;
+  color: var(--tab-active-text, var(--text));
+  background: color-mix(in srgb, var(--tab-highlight, var(--accent)) 86%, #ffffff);
+  border: 1px solid color-mix(in srgb, var(--tab-highlight, var(--accent)) 68%, var(--border));
 }
 
 .trackerWrap {
@@ -613,26 +968,53 @@ a:hover {
 
 .hourGrid {
   display: grid;
-  grid-template-columns: repeat(20, minmax(8px, 1fr));
-  gap: 4px;
+  --hour-cell-size: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(var(--hour-cell-size), var(--hour-cell-size)));
+  grid-auto-rows: var(--hour-cell-size);
+  justify-content: flex-start;
+  gap: 3px;
+  width: 100%;
 }
 
 .hourCell {
-  width: 100%;
-  aspect-ratio: 1;
-  border: 1px solid var(--border);
-  border-radius: 5px;
+  width: var(--hour-cell-size);
+  height: var(--hour-cell-size);
+  min-width: 0;
+  min-height: 0;
+  aspect-ratio: auto;
+  border: 1px solid #111;
+  border-radius: 1px;
   padding: 0;
-  background: color-mix(in srgb, var(--panel2) 90%, var(--panel));
+  background: #fff;
 }
 
 .hourCell.filled {
-  border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
-  background: color-mix(in srgb, var(--accent) 30%, var(--panel2));
+  border-color: #111;
+  background: #111;
 }
 
 .hourCell.clickable {
-  outline: 1px solid color-mix(in srgb, var(--accent2) 35%, var(--border));
+  outline: 1px solid #666;
+}
+
+.hourCell::after {
+  display: none;
+}
+
+.taskCard {
+  background: #fff;
+  border: 1px solid #1b1b1b;
+  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.08);
+  backdrop-filter: none;
+}
+
+.taskCard h3,
+.taskCard .muted {
+  color: #1f1f1f;
+}
+
+.taskCard .taskChartBar {
+  background: #111;
 }
 
 .medalGrid {
@@ -678,6 +1060,37 @@ a:hover {
   gap: 10px;
 }
 
+.panelTrashZone {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 24vh;
+  z-index: 60;
+  border-top: 1px dashed color-mix(in srgb, var(--danger) 46%, var(--border));
+  border-radius: 38px 38px 0 0;
+  background:
+    radial-gradient(circle at 50% 0%, color-mix(in srgb, #4f9dff 38%, transparent), transparent 58%),
+    linear-gradient(
+      to top,
+      color-mix(in srgb, var(--danger) 24%, transparent),
+      color-mix(in srgb, var(--accent2) 10%, transparent)
+    );
+  color: color-mix(in srgb, var(--danger) 66%, var(--text));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  letter-spacing: 0.03em;
+  backdrop-filter: blur(2px);
+}
+
+.trashIcon {
+  font-size: 16px;
+  line-height: 1;
+}
+
 .exportBar {
   display: flex;
   justify-content: space-between;
@@ -702,7 +1115,7 @@ a:hover {
   .floatingThemeDock {
     right: 10px;
     bottom: 10px;
-    width: min(210px, calc(100vw - 20px));
+    width: min(260px, calc(100vw - 20px));
   }
 
   .quickActions {
@@ -723,7 +1136,8 @@ a:hover {
   }
 
   .hourGrid {
-    grid-template-columns: repeat(10, minmax(10px, 1fr));
+    --hour-cell-size: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(var(--hour-cell-size), var(--hour-cell-size)));
   }
 
   .undoToast {

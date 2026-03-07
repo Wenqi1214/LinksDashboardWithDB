@@ -1,7 +1,11 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 function todayDate() {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 function TaskChart({ points = [] }) {
@@ -37,7 +41,6 @@ export default function TimeTracker({
 }) {
   const [taskName, setTaskName] = useState("");
   const [targetHours, setTargetHours] = useState("100");
-  const currentDate = useMemo(() => todayDate(), []);
 
   async function submitTask() {
     const trimmed = taskName.trim();
@@ -63,11 +66,11 @@ export default function TimeTracker({
       <section className="card">
         <h2>Focus Time Tracker</h2>
         <p className="muted">
-          Task 独立计时。每个 task 自己统计，不再混合总时长。勾 +1h / -1h 记录今天投入。
+          Each task tracks time independently. Use +1h / -1h to log today's effort.
         </p>
         <div className="row">
           <input
-            placeholder="Task name (e.g. English)"
+            placeholder="Task name"
             value={taskName}
             onChange={(e) => setTaskName(e.target.value)}
           />
@@ -139,10 +142,10 @@ export default function TimeTracker({
                   </p>
                 </div>
                 <div className="actions">
-                  <button onClick={() => onAddHour(task.id, currentDate)}>+1h</button>
+                  <button onClick={() => onAddHour(task.id, todayDate())}>+1h</button>
                   <button
                     disabled={Number(task.today_hours) === 0}
-                    onClick={() => onRemoveHour(task.id, currentDate)}
+                    onClick={() => onRemoveHour(task.id, todayDate())}
                   >
                     -1h
                   </button>
@@ -168,8 +171,8 @@ export default function TimeTracker({
                         isAddAction || isRemoveAction ? "clickable" : ""
                       }`}
                       onClick={() => {
-                        if (isAddAction) onAddHour(task.id, currentDate);
-                        if (isRemoveAction) onRemoveHour(task.id, currentDate);
+                        if (isAddAction) onAddHour(task.id, todayDate());
+                        if (isRemoveAction) onRemoveHour(task.id, todayDate());
                       }}
                       disabled={!isAddAction && !isRemoveAction}
                       title={isAddAction ? "Add 1 hour" : isRemoveAction ? "Remove 1 hour" : ""}

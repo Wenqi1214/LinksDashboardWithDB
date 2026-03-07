@@ -10,7 +10,9 @@ function moveInArray(list, fromIndex, toIndex) {
 
 export default function DashboardBoard({
   grouped,
-  onDeleteCategory,
+  onAddCategory,
+  onAddLinkToCategory,
+  onEditCategory,
   onEditLink,
   onDeleteLink,
   onCategoryReorder,
@@ -59,18 +61,6 @@ export default function DashboardBoard({
     if (from < 0 || to < 0) return;
 
     const orderedIds = moveInArray(ids, from, to);
-    onCategoryReorder(orderedIds);
-    clearDrag();
-  }
-
-  function handleCategoryDropAtEnd(e) {
-    const currentDrag = getCurrentDrag(e);
-    if (!currentDrag || currentDrag.type !== "category") return;
-    const ids = grouped.map((c) => c.id);
-    const from = ids.indexOf(currentDrag.categoryId);
-    if (from < 0 || from === ids.length - 1) return;
-
-    const orderedIds = moveInArray(ids, from, ids.length - 1);
     onCategoryReorder(orderedIds);
     clearDrag();
   }
@@ -148,15 +138,24 @@ export default function DashboardBoard({
                 >
                   ::
                 </span>
-                <h3>{category.name}</h3>
+                <h3 onDoubleClick={() => onEditCategory(category)}>{category.name}</h3>
               </div>
-              <button
-                className="iconBtn danger"
-                title="Delete category"
-                onClick={() => onDeleteCategory(category.id)}
-              >
-                x
-              </button>
+              <div className="actions">
+                <button
+                  className="iconBtn"
+                  title="Add link to this category"
+                  onClick={() => onAddLinkToCategory(category.id)}
+                >
+                  +
+                </button>
+                <button
+                  className="iconBtn"
+                  title="Edit category"
+                  onClick={() => onEditCategory(category)}
+                >
+                  ✎
+                </button>
+              </div>
             </header>
 
             <div
@@ -243,24 +242,9 @@ export default function DashboardBoard({
           </section>
         ))}
 
-        {grouped.length > 1 && (
-          <section
-            className="card dropTail"
-            onDragOver={(e) => {
-              const currentDrag = getCurrentDrag(e);
-              if (currentDrag?.type === "category") {
-                e.preventDefault();
-                setCategoryHoverId(-1);
-              }
-            }}
-            onDrop={(e) => {
-              e.preventDefault();
-              handleCategoryDropAtEnd(e);
-            }}
-          >
-            <div className="muted">Drop category here to move to end</div>
-          </section>
-        )}
+        <section className="card addCategoryTail" onClick={onAddCategory} title="Add category">
+          <span className="addCategoryPlus">+</span>
+        </section>
       </main>
     </>
   );

@@ -16,9 +16,17 @@ function normalizeUrl(url) {
   return `https://${trimmed}`;
 }
 
+function dateOnly(input = new Date()) {
+  const d = input instanceof Date ? input : new Date(input);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 function normalizeDateInput(input) {
   if (typeof input === "string" && /^\d{4}-\d{2}-\d{2}$/.test(input)) return input;
-  return new Date().toISOString().slice(0, 10);
+  return dateOnly();
 }
 
 function getWeekStart(date = new Date()) {
@@ -26,11 +34,11 @@ function getWeekStart(date = new Date()) {
   const diff = (day + 6) % 7;
   const monday = new Date(date);
   monday.setDate(date.getDate() - diff);
-  return monday.toISOString().slice(0, 10);
+  return dateOnly(monday);
 }
 
 function getMonthStart(date = new Date()) {
-  return new Date(date.getFullYear(), date.getMonth(), 1).toISOString().slice(0, 10);
+  return dateOnly(new Date(date.getFullYear(), date.getMonth(), 1));
 }
 
 function getNextSortValue(table, whereSql, whereArgs = []) {
@@ -101,6 +109,20 @@ app.put("/api/panels/reorder", (req, res) => {
   res.json({ ok: true });
 });
 
+app.put("/api/panels/:id", (req, res) => {
+  const panelId = Number(req.params.id);
+  const name = String(req.body?.name || "").trim();
+  if (!panelId || !name) return res.status(400).json({ error: "id and name are required" });
+
+  try {
+    const info = db.prepare("UPDATE panels SET name=? WHERE id=?").run(name, panelId);
+    if (info.changes === 0) return res.status(404).json({ error: "Panel not found" });
+    res.json({ ok: true });
+  } catch (_e) {
+    res.status(400).json({ error: "Panel name already exists" });
+  }
+});
+
 // ---------- Categories ----------
 app.get("/api/categories", (req, res) => {
   const panelId = Number(req.query.panel_id);
@@ -130,6 +152,20 @@ app.post("/api/categories", (req, res) => {
   } catch (_e) {
     res.status(400).json({ error: "Category already exists" });
   }
+});
+
+app.put("/api/categories/:id", (req, res) => {
+  const id = Number(req.params.id);
+  const name = String(req.body?.name || "").trim();
+  if (!id || !name) {
+    return res.status(400).json({ error: "id and name are required" });
+  }
+
+  const info = db.prepare("UPDATE categories SET name=? WHERE id=?").run(name, id);
+  if (info.changes === 0) {
+    return res.status(404).json({ error: "Category not found" });
+  }
+  res.json({ ok: true });
 });
 
 app.delete("/api/categories/:id", (req, res) => {
@@ -306,7 +342,7 @@ app.delete("/api/links/:id", (req, res) => {
 app.get("/api/time/tasks", (_req, res) => {
   const weekStart = getWeekStart();
   const monthStart = getMonthStart();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = dateOnly();
 
   const rows = db
     .prepare(
@@ -405,7 +441,7 @@ app.get("/api/time/chart", (_req, res) => {
   const today = new Date();
   const start = new Date(today);
   start.setDate(today.getDate() - (days - 1));
-  const startIso = start.toISOString().slice(0, 10);
+  const startIso = dateOnly(start);
 
   const rows = db
     .prepare(
@@ -423,7 +459,7 @@ app.get("/api/time/chart", (_req, res) => {
   const points = [];
   const cursor = new Date(start);
   for (let i = 0; i < days; i += 1) {
-    const date = cursor.toISOString().slice(0, 10);
+    const date = dateOnly(cursor);
     points.push({ date, hours: map.get(date) || 0 });
     cursor.setDate(cursor.getDate() + 1);
   }
@@ -438,7 +474,7 @@ app.get("/api/time/tasks/:id/chart", (req, res) => {
   const today = new Date();
   const start = new Date(today);
   start.setDate(today.getDate() - (days - 1));
-  const startIso = start.toISOString().slice(0, 10);
+  const startIso = dateOnly(start);
 
   const rows = db
     .prepare(
@@ -456,7 +492,7 @@ app.get("/api/time/tasks/:id/chart", (req, res) => {
   const points = [];
   const cursor = new Date(start);
   for (let i = 0; i < days; i += 1) {
-    const date = cursor.toISOString().slice(0, 10);
+    const date = dateOnly(cursor);
     points.push({ date, hours: map.get(date) || 0 });
     cursor.setDate(cursor.getDate() + 1);
   }
@@ -507,12 +543,12 @@ app.get("/api/time/series", (req, res) => {
 
     const cursor = new Date(startDate);
     for (let i = 0; i < days; i += 1) {
-      const key = cursor.toISOString().slice(0, 10);
+      const key = dateOnly(cursor);
       buckets.push({ key, label: key.slice(5) });
       cursor.setDate(cursor.getDate() + 1);
     }
 
-    const start = startDate.toISOString().slice(0, 10);
+    const start = dateOnly(startDate);
     rows = db
       .prepare(
         `
@@ -767,7 +803,7 @@ const DAILY_VERSES = [
 
 app.get("/api/daily-verse", (_req, res) => {
   const mode = _req.query.mode === "random" ? "random" : "daily";
-  const date = new Date().toISOString().slice(0, 10);
+  const date = dateOnly();
   let verse;
   if (mode === "random") {
     const idx = Math.floor(Math.random() * DAILY_VERSES.length);

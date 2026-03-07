@@ -12,8 +12,11 @@ import {
   getLinks,
   getPanels,
   reorderCategories,
+  reorderPanels,
   reorderLinks,
   restoreCategory,
+  updateCategory,
+  updatePanel,
   updateLink,
 } from "./api/dashboardApi";
 import {
@@ -39,6 +42,7 @@ import DashboardBoard from "./components/DashboardBoard";
 import PanelTabs from "./components/PanelTabs";
 import TimeTracker from "./components/TimeTracker";
 import TodoBoard from "./components/TodoBoard";
+import WorldClocks from "./components/WorldClocks";
 import { usePanelShortcuts } from "./hooks/usePanelShortcuts";
 import { useThemeMode } from "./hooks/useThemeMode";
 
@@ -52,11 +56,25 @@ function getGreeting(hour) {
   return "Good evening";
 }
 
+function localDateString() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 const palettes = [
-  { id: "paper", label: "Paper" },
-  { id: "solar", label: "Solar" },
-  { id: "rose", label: "Rose" },
-  { id: "coast", label: "Coast" },
+  { id: "blank", label: "Blank" },
+  { id: "pastel-blue-special", label: "Pastel Blue Special" },
+  { id: "girl-holding-rose", label: "Girl Holding a Rose" },
+  { id: "easter", label: "Pastels for Easter" },
+  { id: "pasteltones", label: "Pastel Color Tones" },
+  { id: "thoughts", label: "Thoughts" },
+  { id: "lonestar", label: "Lonestar Earth" },
+  { id: "pastelclass", label: "Pastel Class" },
+  { id: "walkalong", label: "Walk Along" },
+  { id: "evensadness", label: "Even with Sadness" },
 ];
 
 export default function App() {
@@ -71,6 +89,9 @@ export default function App() {
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [panelModalOpen, setPanelModalOpen] = useState(false);
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [categoryEditor, setCategoryEditor] = useState(null);
+  const [panelEditor, setPanelEditor] = useState(null);
+  const [draggingPanelId, setDraggingPanelId] = useState(null);
 
   const [timeTasks, setTimeTasks] = useState([]);
   const [taskCharts, setTaskCharts] = useState({});
@@ -83,6 +104,28 @@ export default function App() {
   const [undoState, setUndoState] = useState(null);
   const undoTimerRef = useRef(null);
   const verseRef = useRef(null);
+  const [backgroundImage, setBackgroundImage] = useState(
+    () => localStorage.getItem("linkdash-bg-image") || ""
+  );
+  const [panelOpacity, setPanelOpacity] = useState(
+    () => Number(localStorage.getItem("linkdash-panel-opacity") || "88")
+  );
+  const [bgDim, setBgDim] = useState(
+    () => Number(localStorage.getItem("linkdash-bg-dim") || "24")
+  );
+  const [bgZoom, setBgZoom] = useState(
+    () => Number(localStorage.getItem("linkdash-bg-zoom") || "120")
+  );
+  const [themeDockOpen, setThemeDockOpen] = useState(
+    () => localStorage.getItem("linkdash-theme-dock-open") === "1"
+  );
+  const bgInputRef = useRef(null);
+  const [backgroundPreviewUrl, setBackgroundPreviewUrl] = useState("");
+  const clearBackgroundImage = useCallback(() => {
+    if (backgroundPreviewUrl) URL.revokeObjectURL(backgroundPreviewUrl);
+    setBackgroundPreviewUrl("");
+    setBackgroundImage("");
+  }, [backgroundPreviewUrl]);
 
   const { themeMode, setThemeMode, themePalette, setThemePalette } = useThemeMode();
 
@@ -146,13 +189,9 @@ export default function App() {
     const allPanels = await getPanels();
     setPanels(allPanels);
 
-    const savedPanelId = Number(localStorage.getItem("active-panel-id"));
     const firstPanelId = allPanels[0]?.id ?? null;
-    const initialPanelId = allPanels.some((p) => p.id === savedPanelId)
-      ? savedPanelId
-      : firstPanelId;
 
-    if (initialPanelId) setActiveTab(`panel:${initialPanelId}`);
+    if (firstPanelId) setActiveTab(`panel:${firstPanelId}`);
     else setActiveTab("focus");
   }, []);
 
@@ -173,8 +212,32 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty("--user-panel-opacity", `${Math.min(100, Math.max(35, panelOpacity))}%`);
+
+    try {
+      localStorage.setItem("linkdash-bg-image", backgroundImage || "");
+      localStorage.setItem("linkdash-panel-opacity", String(panelOpacity));
+      localStorage.setItem("linkdash-bg-dim", String(bgDim));
+      localStorage.setItem("linkdash-bg-zoom", String(bgZoom));
+    } catch (_e) {
+      // Ignore quota errors for large images; keep current in-memory preview.
+    }
+  }, [backgroundImage, panelOpacity, bgDim, bgZoom]);
+
+  useEffect(() => {
+    localStorage.setItem("linkdash-theme-dock-open", themeDockOpen ? "1" : "0");
+  }, [themeDockOpen]);
+
+  useEffect(
+    () => () => {
+      if (backgroundPreviewUrl) URL.revokeObjectURL(backgroundPreviewUrl);
+    },
+    [backgroundPreviewUrl]
+  );
+
+  useEffect(() => {
     if (!activePanelId) return;
-    localStorage.setItem("active-panel-id", String(activePanelId));
     loadDashboard(activePanelId);
     setForm(makeBlankForm());
   }, [activePanelId, loadDashboard]);
@@ -223,6 +286,14 @@ export default function App() {
     });
   }
 
+  async function handleRenamePanel(panelId, nameInput) {
+    const name = String(nameInput || "").trim();
+    if (!name) return;
+    await updatePanel(panelId, { name });
+    const allPanels = await getPanels();
+    setPanels(allPanels);
+  }
+
   async function handleAddCategory(nameInput) {
     const panelId = activePanelId;
     if (!panelId) return;
@@ -252,6 +323,14 @@ export default function App() {
         });
       },
     });
+  }
+
+  async function handleRenameCategory(categoryId, nameInput) {
+    if (!activePanelId) return;
+    const name = String(nameInput || "").trim();
+    if (!name) return;
+    await updateCategory(categoryId, { name });
+    await loadDashboard(activePanelId);
   }
 
   async function handleSubmitLink() {
@@ -343,7 +422,7 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `focus-detailed-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `focus-detailed-${localDateString()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -423,13 +502,26 @@ export default function App() {
     day: "numeric",
     year: "numeric",
   });
+  const activeBackgroundSrc = backgroundPreviewUrl || backgroundImage;
+  const photoScale = Math.min(220, Math.max(60, bgZoom)) / 100;
+  const photoDim = Math.min(85, Math.max(0, bgDim)) / 100;
 
   return (
     <div className="page">
+      <div
+        className={`photoBackdrop ${activeBackgroundSrc ? "hasPhoto" : ""}`}
+        style={{ "--photo-scale": String(photoScale), "--photo-dim": String(photoDim) }}
+        aria-hidden="true"
+      >
+        {activeBackgroundSrc && <img src={activeBackgroundSrc} alt="" />}
+        <div className="photoDim" />
+      </div>
+
       <header className="topbar">
         <div className="headerLeft">
-          <h1 className="title">LINKDASH COMMAND CENTER</h1>
-          <p className="muted">
+          <h1 className="title">WAYPOINT</h1>
+          <p className="tagline">A quiet place for the links you return to.</p>
+          <p className="headerMeta">
             {getGreeting(now.getHours())}. {dateText} {clockText}
           </p>
           <PanelTabs
@@ -438,6 +530,16 @@ export default function App() {
             onSelectPanel={(id) => setActiveTab(`panel:${id}`)}
             onSelectFocus={() => setActiveTab("focus")}
             onSelectTodo={() => setActiveTab("todo")}
+            onAddPanel={() => setPanelModalOpen(true)}
+            onEditPanel={(id, name) => setPanelEditor({ id, name })}
+            onPanelDragStateChange={(panelId) => setDraggingPanelId(panelId)}
+            onReorderPanels={async (orderedIds) => {
+              await reorderPanels(orderedIds);
+              const allPanels = await getPanels();
+              setPanels(allPanels);
+              const firstPanelId = allPanels[0]?.id ?? null;
+              if (firstPanelId) setActiveTab(`panel:${firstPanelId}`);
+            }}
           />
         </div>
 
@@ -453,41 +555,38 @@ export default function App() {
         )}
       </header>
 
-      <section className="quickActions">
-        {activePanelId && (
-          <>
-            <button
-              className="ghostBtn"
-              onClick={() => {
-                setForm(makeBlankForm());
-                setLinkModalOpen(true);
-              }}
-            >
-              + Link
-            </button>
-            <button className="ghostBtn" onClick={() => setCategoryModalOpen(true)}>
-              + Category
-            </button>
-          </>
-        )}
-        <button className="ghostBtn" onClick={() => setPanelModalOpen(true)}>
-          + Panel
-        </button>
-        {activePanelId && panels.length > 1 && (
-          <button
-            className="iconBtn danger"
-            title="Delete current panel"
-            onClick={() => handleDeleteCurrentPanel(activePanelId)}
-          >
-            x
-          </button>
-        )}
+      <section className="worldClockSection">
+        <WorldClocks />
       </section>
+
+      {draggingPanelId != null && (
+        <div
+          className="panelTrashZone"
+          onDragOver={(e) => {
+            e.preventDefault();
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            const droppedId = Number(e.dataTransfer.getData("text/panel-id") || draggingPanelId);
+            setDraggingPanelId(null);
+            if (!droppedId) return;
+            handleDeleteCurrentPanel(droppedId);
+          }}
+        >
+          <span className="trashIcon">🗑</span>
+          <span>Drop panel here to delete</span>
+        </div>
+      )}
 
       {activePanelId && (
         <DashboardBoard
           grouped={grouped}
-          onDeleteCategory={handleDeleteCategory}
+          onAddCategory={() => setCategoryModalOpen(true)}
+          onAddLinkToCategory={(categoryId) => {
+            setForm({ id: null, name: "", url: "", category_id: String(categoryId), description: "" });
+            setLinkModalOpen(true);
+          }}
+          onEditCategory={(category) => setCategoryEditor({ id: category.id, name: category.name })}
           onEditLink={handleStartEdit}
           onDeleteLink={handleDeleteLink}
           onCategoryReorder={handleCategoryReorder}
@@ -662,6 +761,36 @@ export default function App() {
         </div>
       )}
 
+      {panelEditor && (
+        <div className="overlay" onClick={() => setPanelEditor(null)}>
+          <section className="confirmCard card" onClick={(e) => e.stopPropagation()}>
+            <h3>Edit Panel</h3>
+            <div className="modalFields">
+              <input
+                placeholder="Panel name"
+                value={panelEditor.name}
+                onChange={(e) =>
+                  setPanelEditor((prev) => (prev ? { ...prev, name: e.target.value } : prev))
+                }
+              />
+            </div>
+            <div className="row">
+              <button onClick={() => setPanelEditor(null)}>Cancel</button>
+              <button
+                className="primary"
+                onClick={async () => {
+                  const { id, name } = panelEditor;
+                  await handleRenamePanel(id, name);
+                  setPanelEditor(null);
+                }}
+              >
+                Save
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
       {categoryModalOpen && (
         <div className="overlay" onClick={() => setCategoryModalOpen(false)}>
           <section className="confirmCard card" onClick={(e) => e.stopPropagation()}>
@@ -689,6 +818,46 @@ export default function App() {
         </div>
       )}
 
+      {categoryEditor && (
+        <div className="overlay" onClick={() => setCategoryEditor(null)}>
+          <section className="confirmCard card" onClick={(e) => e.stopPropagation()}>
+            <h3>Edit Category</h3>
+            <div className="modalFields">
+              <input
+                placeholder="Category name"
+                value={categoryEditor.name}
+                onChange={(e) =>
+                  setCategoryEditor((prev) => (prev ? { ...prev, name: e.target.value } : prev))
+                }
+              />
+            </div>
+            <div className="row">
+              <button onClick={() => setCategoryEditor(null)}>Cancel</button>
+              <button
+                className="danger"
+                onClick={() => {
+                  const targetId = categoryEditor.id;
+                  setCategoryEditor(null);
+                  handleDeleteCategory(targetId);
+                }}
+              >
+                Delete
+              </button>
+              <button
+                className="primary"
+                onClick={async () => {
+                  const { id, name } = categoryEditor;
+                  await handleRenameCategory(id, name);
+                  setCategoryEditor(null);
+                }}
+              >
+                Save
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
       {undoState && (
         <div className="undoToast card">
           <span>{undoState.message}</span>
@@ -704,33 +873,98 @@ export default function App() {
         </div>
       )}
 
-      <aside className="themeDock card floatingThemeDock">
-        <div className="themeField">
-          <label htmlFor="mode-select">Mode</label>
-          <select
-            id="mode-select"
-            value={themeMode}
-            onChange={(e) => setThemeMode(e.target.value)}
-          >
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-            <option value="system">System</option>
-          </select>
-        </div>
-        <div className="themeField">
-          <label htmlFor="palette-select">Palette</label>
-          <select
-            id="palette-select"
-            value={themePalette}
-            onChange={(e) => setThemePalette(e.target.value)}
-          >
-            {palettes.map((palette) => (
-              <option key={palette.id} value={palette.id}>
-                {palette.label}
-              </option>
-            ))}
-          </select>
-        </div>
+      <aside className={`themeDock card floatingThemeDock ${themeDockOpen ? "open" : "closed"}`}>
+        <button className="dockToggle" onClick={() => setThemeDockOpen((v) => !v)}>
+          {themeDockOpen ? "Close Mode" : "Change Mode"}
+        </button>
+        {themeDockOpen && (
+          <>
+            <div className="themeField">
+              <label htmlFor="mode-select">Mode</label>
+              <select
+                id="mode-select"
+                value={themeMode}
+                onChange={(e) => setThemeMode(e.target.value)}
+              >
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="system">System</option>
+              </select>
+            </div>
+            <div className="themeField">
+              <label htmlFor="palette-select">Palette</label>
+              <select
+                id="palette-select"
+                value={themePalette}
+                onChange={(e) => setThemePalette(e.target.value)}
+              >
+                {palettes.map((palette) => (
+                  <option key={palette.id} value={palette.id}>
+                    {palette.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="themeField">
+              <label>Background</label>
+              <input
+                ref={bgInputRef}
+                className="hiddenFileInput"
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (backgroundPreviewUrl) URL.revokeObjectURL(backgroundPreviewUrl);
+                  const preview = URL.createObjectURL(file);
+                  setBackgroundPreviewUrl(preview);
+                  const reader = new FileReader();
+                  reader.onload = () => setBackgroundImage(String(reader.result || ""));
+                  reader.readAsDataURL(file);
+                }}
+              />
+              <div className="row">
+                <button onClick={() => bgInputRef.current?.click()}>Upload Photo</button>
+                <button className="iconBtn" title="Clear background" onClick={clearBackgroundImage}>
+                  ⌧
+                </button>
+              </div>
+            </div>
+            <div className="themeField">
+              <label htmlFor="panel-opacity">Card Opacity {panelOpacity}%</label>
+              <input
+                id="panel-opacity"
+                type="range"
+                min="35"
+                max="100"
+                value={panelOpacity}
+                onChange={(e) => setPanelOpacity(Number(e.target.value))}
+              />
+            </div>
+            <div className="themeField">
+              <label htmlFor="bg-dim">Image Dim {bgDim}%</label>
+              <input
+                id="bg-dim"
+                type="range"
+                min="0"
+                max="85"
+                value={bgDim}
+                onChange={(e) => setBgDim(Number(e.target.value))}
+              />
+            </div>
+            <div className="themeField">
+              <label htmlFor="bg-zoom">Image Scale {bgZoom}%</label>
+              <input
+                id="bg-zoom"
+                type="range"
+                min="60"
+                max="220"
+                value={bgZoom}
+                onChange={(e) => setBgZoom(Number(e.target.value))}
+              />
+            </div>
+          </>
+        )}
       </aside>
     </div>
   );

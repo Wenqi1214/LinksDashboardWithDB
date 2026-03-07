@@ -1,11 +1,28 @@
 import { useEffect, useState } from "react";
 
+const ALLOWED_PALETTES = new Set([
+  "blank",
+  "pastel-blue-special",
+  "girl-holding-rose",
+  "easter",
+  "pasteltones",
+  "thoughts",
+  "lonestar",
+  "pastelclass",
+  "walkalong",
+  "evensadness",
+]);
+const DEFAULT_PALETTE = "pastel-blue-special";
+
 export function useThemeMode() {
   const [themeMode, setThemeMode] = useState(
     () => localStorage.getItem("theme-mode") || "system"
   );
   const [themePalette, setThemePalette] = useState(
-    () => localStorage.getItem("theme-palette") || "paper"
+    () => {
+      const saved = localStorage.getItem("theme-palette");
+      return saved && ALLOWED_PALETTES.has(saved) ? saved : DEFAULT_PALETTE;
+    }
   );
 
   useEffect(() => {

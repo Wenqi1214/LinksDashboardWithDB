@@ -12,8 +12,11 @@ import {
   localGetLinks,
   localGetPanels,
   localReorderCategories,
+  localReorderPanels,
   localReorderLinks,
   localRestoreCategory,
+  localUpdatePanel,
+  localUpdateCategory,
   localUpdateLink,
 } from "../lib/localDataApi";
 
@@ -37,6 +40,18 @@ export async function deletePanel(panelId) {
   return res.data;
 }
 
+export async function reorderPanels(orderedIds) {
+  if (useLocalData) return localReorderPanels(orderedIds);
+  const res = await api.put("/panels/reorder", { orderedIds });
+  return res.data;
+}
+
+export async function updatePanel(panelId, payload) {
+  if (useLocalData) return localUpdatePanel(panelId, payload);
+  const res = await api.put(`/panels/${panelId}`, payload);
+  return res.data;
+}
+
 export async function getCategories(panelId) {
   if (useLocalData) return localGetCategories(panelId);
   const res = await api.get("/categories", { params: { panel_id: panelId } });
@@ -52,6 +67,12 @@ export async function createCategory(payload) {
 export async function deleteCategory(categoryId) {
   if (useLocalData) return localDeleteCategory(categoryId);
   const res = await api.delete(`/categories/${categoryId}`);
+  return res.data;
+}
+
+export async function updateCategory(categoryId, payload) {
+  if (useLocalData) return localUpdateCategory(categoryId, payload);
+  const res = await api.put(`/categories/${categoryId}`, payload);
   return res.data;
 }
 
