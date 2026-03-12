@@ -2,6 +2,7 @@
 const express = require("express");
 const cors = require("cors");
 const db = require("./db");
+const verses = require("./data/verses.json");
 
 const app = express();
 app.use(cors());
@@ -756,66 +757,23 @@ app.get("/api/todo/history", (_req, res) => {
 });
 
 // ---------- Daily Verse ----------
-const DAILY_VERSES = [
-  {
-    ref: "Isaiah 41:10",
-    zh_ref: "赛 41:10",
-    zh: "你不要害怕，因为我与你同在；不要惊惶，因为我是你的神。我必坚固你，我必帮助你；我必用我公义的右手扶持你。",
-    en: "Fear not, for I am with you; be not dismayed, for I am your God. I will strengthen you, I will help you, I will uphold you with my righteous right hand.",
-  },
-  {
-    ref: "Philippians 4:13",
-    zh_ref: "腓 4:13",
-    zh: "我靠着那加给我力量的，凡事都能做。",
-    en: "I can do all things through him who strengthens me.",
-  },
-  {
-    ref: "Psalm 23:1",
-    zh_ref: "诗 23:1",
-    zh: "耶和华是我的牧者，我必不至缺乏。",
-    en: "The Lord is my shepherd; I shall not want.",
-  },
-  {
-    ref: "Joshua 1:9",
-    zh_ref: "书 1:9",
-    zh: "你当刚强壮胆！不要惧怕，也不要惊惶，因为你无论往哪里去，耶和华你的神必与你同在。",
-    en: "Be strong and courageous. Do not be frightened, and do not be dismayed, for the Lord your God is with you wherever you go.",
-  },
-  {
-    ref: "Romans 8:28",
-    zh_ref: "罗 8:28",
-    zh: "我们晓得万事都互相效力，叫爱神的人得益处。",
-    en: "And we know that for those who love God all things work together for good.",
-  },
-  {
-    ref: "Matthew 11:28",
-    zh_ref: "太 11:28",
-    zh: "凡劳苦担重担的人，可以到我这里来，我就使你们得安息。",
-    en: "Come to me, all who labor and are heavy laden, and I will give you rest.",
-  },
-  {
-    ref: "Psalm 46:1",
-    zh_ref: "诗 46:1",
-    zh: "神是我们的避难所，是我们的力量，是我们在患难中随时的帮助。",
-    en: "God is our refuge and strength, a very present help in trouble.",
-  },
-];
+function getRandomVerse() {
+  if (!Array.isArray(verses) || verses.length === 0) {
+    throw new Error("Verse data is missing or empty");
+  }
+
+  return verses[Math.floor(Math.random() * verses.length)];
+}
 
 app.get("/api/daily-verse", (_req, res) => {
-  const mode = _req.query.mode === "random" ? "random" : "daily";
   const date = dateOnly();
-  let verse;
-  if (mode === "random") {
-    const idx = Math.floor(Math.random() * DAILY_VERSES.length);
-    verse = DAILY_VERSES[idx];
-  } else {
-    const daysSinceEpoch = Math.floor(new Date(date).getTime() / 86400000);
-    verse =
-      DAILY_VERSES[
-        ((daysSinceEpoch % DAILY_VERSES.length) + DAILY_VERSES.length) % DAILY_VERSES.length
-      ];
+  try {
+    const verse = getRandomVerse();
+    res.json({ date, ...verse });
+  } catch (error) {
+    console.error("Failed to load daily verse:", error);
+    res.status(500).json({ error: "Daily verses are unavailable" });
   }
-  res.json({ date, ...verse });
 });
 
 const PORT = 8787;
