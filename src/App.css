@@ -49,8 +49,24 @@
   margin-bottom: 18px;
 }
 
+.brandMark {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.brandIcon {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 16px color-mix(in srgb, var(--accent2) 20%, transparent));
+}
+
 .title {
-  margin: 0 0 4px;
+  margin: 0;
   font-family: "Bodoni 72", "Didot", "Times New Roman", serif;
   font-size: 22px;
   font-weight: 600;
@@ -1106,6 +1122,11 @@ a:hover {
   .topbar {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .brandIcon {
+    width: 36px;
+    height: 36px;
   }
 
   .themeDock {

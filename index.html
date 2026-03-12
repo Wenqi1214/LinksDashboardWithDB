@@ -7,6 +7,11 @@
     <title>linkdash</title>
     <script>
       (function () {
+        const icons = ["/air-ticket.svg", "/hot-air-balloon.svg"];
+        const iconHref = icons[Math.floor(Math.random() * icons.length)];
+        const favicon = document.querySelector("link[rel='icon']");
+        if (favicon) favicon.setAttribute("href", iconHref);
+
         const saved = localStorage.getItem("theme-mode") || "system";
         const allowed = new Set([
           "blank",

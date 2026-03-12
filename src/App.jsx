@@ -64,6 +64,13 @@ function localDateString() {
   return `${y}-${m}-${day}`;
 }
 
+const assetBase = import.meta.env.BASE_URL;
+const brandIcons = [`${assetBase}air-ticket.svg`, `${assetBase}hot-air-balloon.svg`];
+
+function pickRandomBrandIcon() {
+  return brandIcons[Math.floor(Math.random() * brandIcons.length)];
+}
+
 const palettes = [
   { id: "blank", label: "Blank" },
   { id: "pastel-blue-special", label: "Pastel Blue Special" },
@@ -78,6 +85,7 @@ const palettes = [
 ];
 
 export default function App() {
+  const [brandIcon] = useState(() => pickRandomBrandIcon());
   const [panels, setPanels] = useState([]);
   const [activeTab, setActiveTab] = useState("focus");
   const [categories, setCategories] = useState([]);
@@ -228,6 +236,17 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("linkdash-theme-dock-open", themeDockOpen ? "1" : "0");
   }, [themeDockOpen]);
+
+  useEffect(() => {
+    let favicon = document.querySelector("link[rel='icon']");
+    if (!favicon) {
+      favicon = document.createElement("link");
+      favicon.setAttribute("rel", "icon");
+      favicon.setAttribute("type", "image/svg+xml");
+      document.head.appendChild(favicon);
+    }
+    favicon.setAttribute("href", brandIcon);
+  }, [brandIcon]);
 
   useEffect(
     () => () => {
@@ -519,7 +538,10 @@ export default function App() {
 
       <header className="topbar">
         <div className="headerLeft">
-          <h1 className="title">WAYPOINT</h1>
+          <div className="brandMark">
+            <img className="brandIcon" src={brandIcon} alt="" aria-hidden="true" />
+            <h1 className="title">WAYPOINT</h1>
+          </div>
           <p className="tagline">A quiet place for the links you return to.</p>
           <p className="headerMeta">
             {getGreeting(now.getHours())}. {dateText} {clockText}

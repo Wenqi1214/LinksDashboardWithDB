@@ -7,6 +7,11 @@
     <title>linkdash</title>
     <script>
       (function () {
+        const icons = ["/air-ticket.svg", "/hot-air-balloon.svg"];
+        const iconHref = icons[Math.floor(Math.random() * icons.length)];
+        const favicon = document.querySelector("link[rel='icon']");
+        if (favicon) favicon.setAttribute("href", iconHref);
+
         const saved = localStorage.getItem("theme-mode") || "system";
         const allowed = new Set([
           "blank",
@@ -29,8 +34,8 @@
         document.documentElement.dataset.palette = palette;
       })();
     </script>
-    <script type="module" crossorigin src="/assets/index-B_VrsXsv.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-BRALJL7W.css">
+    <script type="module" crossorigin src="/assets/index-MF62j4Pw.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-9xAIUS8m.css">
   </head>
   <body>
     <div id="root"></div>
